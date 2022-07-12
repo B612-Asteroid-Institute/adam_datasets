@@ -1,0 +1,5 @@
+Goals:
+
+Download SDSS DR9 imaging data fraction
+Take fraction and develop pre-processing
+Use on whole DR9 Dataset
