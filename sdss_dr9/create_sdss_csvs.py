@@ -56,11 +56,11 @@ def query_by_ra(ra_start, ra_stop, check_download_integrity=False):
 
         df.to_csv(file_name, index=False)
         #clear_download_cache()
-        cache_files = glob.glob(CACHE_DIR)
-        print(len(cache_files))
+        cache_files = glob.glob(CACHE_DIR + '/*')
+        #print(len(cache_files))
         for f in cache_files:
             os.remove(f)
-        print(len(cache_files))
+        #print(len(cache_files))
         
         
     if check_download_integrity:
