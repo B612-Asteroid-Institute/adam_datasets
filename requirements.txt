@@ -1,0 +1,9 @@
+astro-datalab
+numpy
+pandas
+healpy 
+matplotlib
+astropy
+pyvo
+tables
+google-cloud-storage
