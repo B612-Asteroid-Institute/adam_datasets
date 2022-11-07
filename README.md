@@ -13,6 +13,21 @@ This repository contains Python scripts and Jupyter notebooks that download astr
 | Southern Photometric Local Universe Survey [S-PLUS] | SPLUS | |
 | Zwicky Transient Facility [ZTF] (DR12)| ZTF_DR12 | |
 
+## Installation
+
+After cloning this repository you can pip install this package.
+
+`pip install .`
+
+## Usage
+After installation, you can run the ingestion process from the command line.
+
+Depending on the dataset, you may need credentials to access them. For example, do fetch the NSC_DR2 dataset you will need `astro-datalab` credentials. These are typicall passed in as environment variables.
+
+```
+DL_CREDENTIALS=username:passwd adam-etl --data_dir=data --out_dir=out --dataset=nsc_dr2
+```
+
 
 ## Adding a dataset
 Any scripts and ingest codes for new datasets should be added to their own subdirectory. If the dataset has a specific data release then that data release should be added as its own directory in the directory tree. 
