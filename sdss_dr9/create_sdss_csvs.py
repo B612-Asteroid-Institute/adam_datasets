@@ -2,17 +2,13 @@ import pandas as pd
 import numpy as np
 import os
 import glob
+import argparse
 from astroquery.sdss import SDSS, Conf
-#from astropy.config import set_temp_cache
-#from astropy.utils.data import clear_download_cache
 from astropy.time import Time
-import shutil
 
-DATA_DIR = '/astro/store/epyc3/data3/adam_datasets/sdss_dr9_all'
-CACHE_DIR = '/astro/users/ejgl/.astropy/cache/astroquery/SDSS'
 
-def query_by_ra(ra_start, ra_stop, check_download_integrity=False):
-    file_name = os.path.join(DATA_DIR, f"sdss_dr9_observations_{ra_start:06.2f}_{ra_stop:06.2f}_all.csv")
+def query_by_ra(ra_start, ra_stop, path, cache, check_download_integrity=False):
+    file_name = os.path.join(path, f"sdss_dr9_observations_{ra_start:06.2f}_{ra_stop:06.2f}_all.csv")
     
     if not os.path.exists(file_name):
         print(ra_start, ra_stop)
@@ -56,7 +52,7 @@ def query_by_ra(ra_start, ra_stop, check_download_integrity=False):
 
         df.to_csv(file_name, index=False)
         #clear_download_cache()
-        cache_files = glob.glob(CACHE_DIR + '/*')
+        cache_files = glob.glob(cache + '/*')
         #print(len(cache_files))
         for f in cache_files:
             os.remove(f)
@@ -81,7 +77,14 @@ def query_by_ra(ra_start, ra_stop, check_download_integrity=False):
         if n_results != n_downloaded_results:
             err = (f"Downloaded file ({file_name}) contains {n_results} rows while query expected {n_downloaded_results} rows.")
             raise ValueError(err)
-            
-ras = np.linspace(0, 360, 360 * 10 + 1)
-for i in range(len(ras)-1):
-    query_by_ra(ras[i], ras[i+1], check_download_integrity=False)
+
+if __name__ == "__main__":
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--path', required=True, help='directory of .csv files created with create_sdss_csvs.py')
+    parser.add_argument('--cache', default='/astro/users/ejgl/.astropy/cache/astroquery/SDSS', help='directory of the astropy cache.')
+    args = parser.parse_args()
+
+    ras = np.linspace(0, 360, 360 * 10 + 1)
+    for i in range(len(ras)-1):
+        query_by_ra(ras[i], ras[i+1], args.path, args.cache)

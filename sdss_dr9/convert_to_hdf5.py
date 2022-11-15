@@ -1,14 +1,12 @@
 import pandas as pd
 import numpy as np
 import os
-pd.set_option("display.max_columns", None)
 import glob
 import multiprocessing as mp
-
-import astroquery.SDSS as SDSS
+import argparse
 from astropy.time import Time
 
-DATA_DIR = '/astro/store/epyc3/data3/adam_datasets/sdss_dr9_all'
+#DATA_DIR = '/astro/store/epyc3/data3/adam_datasets/sdss_dr9_all'
 
 def processWindow(window_file_name, observations):
     if len(observations) > 0:
@@ -21,13 +19,31 @@ def processWindow(window_file_name, observations):
         )
     return
 
-def convert_to_hdf5(observation_files, test=False):
+def convert_to_hdf5(observation_files, data_path):
+    """
+    Takes in a list of csv files created by create_sdss_csvs.py and their directory path
+    and converts them into hdf5 files for indexing.
+    """
+    
+    mjd_df = pd.read_csv(os.path.join(args.path, 'min_max_mjd.csv'))
+
+    mjd_min = mjd_df['mjd_min'][0] 
+    mjd_max = mjd_df['mjd_max'][0]
+
+    window_size = 31
+    window_starts = np.arange(
+        np.floor(mjd_min), 
+        np.ceil(mjd_max), 
+        window_size
+    )
+    
     os.nice(10)
 
     pool = mp.Pool(10)
 
     observation_files_completed = np.array([])
     for i, observation_file in enumerate(observation_files):
+        
         observations = pd.read_csv(observation_file, index_col=False, 
                                    dtype={'observatory_code': str, 'obs_id': str, 'exposure_id': str})
 
@@ -39,10 +55,11 @@ def convert_to_hdf5(observation_files, test=False):
             start_isot = Time(window_start, scale="utc", format="mjd").isot.split("T")[0]
             end_isot = Time(window_end, scale="utc", format="mjd").isot.split("T")[0]
 
-            if test:
-                window_file_name = os.path.join(DATA_DIR, "hdf5_test", f"sdss_dr9_observations_{start_isot}_{end_isot}.h5")
-            else:
-                window_file_name = os.path.join(DATA_DIR, "hdf5", f"sdss_dr9_observations_{start_isot}_{end_isot}.h5")
+            
+            if not os.path.exists(os.path.join(data_path, "hdf5")):
+                os.mkdir(os.path.join(data_path, "hdf5"))
+            
+            window_file_name = os.path.join(data_path, "hdf5", f"sdss_dr9_observations_{start_isot}_{end_isot}.h5")
             window_file_names.append(window_file_name)
 
             observations_window = observations[(observations["mjd_utc"] >= window_start) & (observations["mjd_utc"] < window_end)]
@@ -61,36 +78,15 @@ def convert_to_hdf5(observation_files, test=False):
 
     pool.close()
     
-
-min_time = None
-max_time = None
-
-for f in ['u', 'g', 'r', 'i', 'z']:
-    min_max_table = SDSS.query_sql(f"""
-                                   SELECT min(TAI_{f}) as min_TAI_{f}, 
-                                   max(TAI_{f}) as max_TAI_{f} 
-                                   FROM PhotoObj WHERE TAI_{f} != -9999
-                                   """,
-                                   timeout = 3600, 
-                                   data_release=9)
-    if min_time is None or min_time < min_max_table[f'min_TAI_{f}']:
-        min_time = min_max_table[f'min_TAI_{f}']
-    if max_time is None or max_time > min_max_table[f'max_TAI_{f}']:
-        max_time = min_max_table[f'max_TAI_{f}']
-
-
-mjd_min = min_time/(24*3600)
-mjd_max = max_time/(24*3600)
+if __name__ == "__main__":    
     
-    
-window_size = 31
-window_starts = np.arange(
-    np.floor(mjd_min), 
-    np.ceil(mjd_max), 
-    window_size
-)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--path', required=True, help='directory of .csv files created with create_sdss_csvs.py')
+    args = parser.parse_args()
 
-#test
-csv_files = glob.glob(DATA_DIR + '/*')[:10]
-convert_to_hdf5(csv_files, test=True)
+    csv_files = [log for log in glob.glob(args.path + '/sdss*.csv') if not os.path.isdir(log)]
+
+
+    convert_to_hdf5(csv_files, args.path)
+
 
