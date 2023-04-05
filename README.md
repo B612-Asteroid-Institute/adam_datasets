@@ -13,7 +13,6 @@ This repository contains Python scripts and Jupyter notebooks that download astr
 | Southern Photometric Local Universe Survey [S-PLUS] | SPLUS | |
 | Zwicky Transient Facility [ZTF] (DR12)| ZTF_DR12 | |
 
-
 ## Adding a dataset
 Any scripts and ingest codes for new datasets should be added to their own subdirectory. If the dataset has a specific data release then that data release should be added as its own directory in the directory tree. 
 
